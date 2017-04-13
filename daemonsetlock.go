@@ -1,4 +1,4 @@
-package main
+package kured
 
 import (
 	"time"
@@ -8,35 +8,35 @@ import (
 	"k8s.io/client-go/pkg/api/unversioned"
 )
 
-type clusterLock struct {
+type dsl struct {
 	client     *kubernetes.Clientset
 	nodeID     string
 	annotation string
 }
 
-func NewClusterLock(client *kubernetes.Clientset, nodeID string, annotation string) *clusterLock {
-	return &clusterLock{client, nodeID, annotation}
+func NewDaemonSetLock(client *kubernetes.Clientset, nodeID string, annotation string) *dsl {
+	return &dsl{client, nodeID, annotation}
 }
 
-func (cl *clusterLock) Acquire() (bool, string, error) {
+func (dsl *dsl) Acquire() (bool, string, error) {
 	for {
 		// We should infer our daemonset from kubernetes.io/created-by eventually
-		ds, err := cl.client.ExtensionsV1beta1().DaemonSets("kube-system").Get("kured")
+		ds, err := dsl.client.ExtensionsV1beta1().DaemonSets("kube-system").Get("kured")
 		if err != nil {
 			return false, "", err
 		}
 
-		holder, exists := ds.ObjectMeta.Annotations[cl.annotation]
+		holder, exists := ds.ObjectMeta.Annotations[dsl.annotation]
 		if exists {
-			return holder == cl.nodeID, holder, nil
+			return holder == dsl.nodeID, holder, nil
 		}
 
 		if ds.ObjectMeta.Annotations == nil {
 			ds.ObjectMeta.Annotations = make(map[string]string)
 		}
-		ds.ObjectMeta.Annotations[cl.annotation] = cl.nodeID
+		ds.ObjectMeta.Annotations[dsl.annotation] = dsl.nodeID
 
-		_, err = cl.client.ExtensionsV1beta1().DaemonSets("kube-system").Update(ds)
+		_, err = dsl.client.ExtensionsV1beta1().DaemonSets("kube-system").Update(ds)
 		if err != nil {
 			if se, ok := err.(*errors.StatusError); ok && se.ErrStatus.Reason == unversioned.StatusReasonConflict {
 				// Something else updated the resource between us reading and writing - try again soon
@@ -46,14 +46,14 @@ func (cl *clusterLock) Acquire() (bool, string, error) {
 				return false, "", err
 			}
 		}
-		return true, cl.nodeID, nil
+		return true, dsl.nodeID, nil
 	}
 }
 
-func (cl *clusterLock) Test() (bool, error) {
+func (dsl *dsl) Test() (bool, error) {
 	return false, nil
 }
 
-func (cl *clusterLock) Release() error {
+func (dsl *dsl) Release() error {
 	return nil
 }

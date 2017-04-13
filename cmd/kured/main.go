@@ -1,12 +1,15 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	"github.com/weaveworks/kured"
 )
 
 var (
@@ -30,6 +33,11 @@ func main() {
 }
 
 func root(cmd *cobra.Command, args []string) {
+	nodeID := os.Getenv("KURED_NODE_ID")
+	if nodeID == "" {
+		log.Fatal("KURED_NODE_ID environment variable required")
+	}
+
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -40,8 +48,7 @@ func root(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	nodeID := "foo"
-	lock := NewClusterLock(client, nodeID, lockAnnotation)
+	lock := kured.NewDaemonSetLock(client, nodeID, lockAnnotation)
 
 	holdingLock, err := lock.Test()
 	if err != nil {
@@ -49,6 +56,8 @@ func root(cmd *cobra.Command, args []string) {
 	}
 
 	if holdingLock {
+		// TBD: Uncordon
+
 		if err := lock.Release(); err != nil {
 			log.Fatal(err)
 		}
@@ -65,5 +74,7 @@ func root(cmd *cobra.Command, args []string) {
 			log.Infof("Lock already held: %v", holder)
 			continue
 		}
+
+		// TBD: Drain & reboot
 	}
 }
