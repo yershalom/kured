@@ -14,6 +14,8 @@ import (
 
 var (
 	period         int
+	dsNamespace    string
+	dsName         string
 	lockAnnotation string
 )
 
@@ -23,7 +25,12 @@ func main() {
 		Short: "Kubernetes Node Reboot Daemon",
 		Run:   root}
 
-	rootCmd.PersistentFlags().IntVar(&period, "period", 60, "reboot check period in minutes")
+	rootCmd.PersistentFlags().IntVar(&period, "period", 60,
+		"reboot check period in minutes")
+	rootCmd.PersistentFlags().StringVar(&dsNamespace, "ds-name", "kube-system",
+		"namespace containing daemonset on which to place lock")
+	rootCmd.PersistentFlags().StringVar(&dsName, "ds-namespace", "kured",
+		"name of daemonset on which to place lock")
 	rootCmd.PersistentFlags().StringVar(&lockAnnotation, "lock-annotation", "works.weave/kured-node-lock",
 		"annotation in which to record locking node")
 
@@ -48,7 +55,7 @@ func root(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	lock := kured.NewDaemonSetLock(client, nodeID, lockAnnotation)
+	lock := kured.NewDaemonSetLock(client, nodeID, dsNamespace, dsName, lockAnnotation)
 
 	holdingLock, err := lock.Test()
 	if err != nil {

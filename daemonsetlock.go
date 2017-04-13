@@ -11,17 +11,18 @@ import (
 type dsl struct {
 	client     *kubernetes.Clientset
 	nodeID     string
+	namespace  string
+	name       string
 	annotation string
 }
 
-func NewDaemonSetLock(client *kubernetes.Clientset, nodeID string, annotation string) *dsl {
-	return &dsl{client, nodeID, annotation}
+func NewDaemonSetLock(client *kubernetes.Clientset, nodeID, namespace, name, annotation string) *dsl {
+	return &dsl{client, nodeID, namespace, name, annotation}
 }
 
 func (dsl *dsl) Acquire() (bool, string, error) {
 	for {
-		// We should infer our daemonset from kubernetes.io/created-by eventually
-		ds, err := dsl.client.ExtensionsV1beta1().DaemonSets("kube-system").Get("kured")
+		ds, err := dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Get(dsl.name)
 		if err != nil {
 			return false, "", err
 		}
@@ -36,7 +37,7 @@ func (dsl *dsl) Acquire() (bool, string, error) {
 		}
 		ds.ObjectMeta.Annotations[dsl.annotation] = dsl.nodeID
 
-		_, err = dsl.client.ExtensionsV1beta1().DaemonSets("kube-system").Update(ds)
+		_, err = dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Update(ds)
 		if err != nil {
 			if se, ok := err.(*errors.StatusError); ok && se.ErrStatus.Reason == unversioned.StatusReasonConflict {
 				// Something else updated the resource between us reading and writing - try again soon
