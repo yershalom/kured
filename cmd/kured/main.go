@@ -21,8 +21,8 @@ var (
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:   "anr",
-		Short: "Kubernetes Node Reboot Daemon",
+		Use:   "kured",
+		Short: "Kubernetes Reboot Daemon",
 		Run:   root}
 
 	rootCmd.PersistentFlags().IntVar(&period, "period", 60,
@@ -57,12 +57,12 @@ func root(cmd *cobra.Command, args []string) {
 
 	lock := kured.NewDaemonSetLock(client, nodeID, dsNamespace, dsName, lockAnnotation)
 
-	holdingLock, err := lock.Test()
+	holding, err := lock.Test()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if holdingLock {
+	if holding {
 		// TBD: Uncordon
 
 		if err := lock.Release(); err != nil {
@@ -71,13 +71,12 @@ func root(cmd *cobra.Command, args []string) {
 	}
 
 	ticker := time.NewTicker(time.Minute * time.Duration(period))
-
 	for _ = range ticker.C {
-		holdingLock, holder, err := lock.Acquire()
+		holding, holder, err := lock.Acquire()
 		if err != nil {
-			log.Errorf("Unable to acquire lock: %v", err)
+			log.Fatalf("Unable to acquire lock: %v", err)
 		}
-		if !holdingLock {
+		if !holding {
 			log.Infof("Lock already held: %v", holder)
 			continue
 		}
