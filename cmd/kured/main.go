@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -43,7 +42,7 @@ func main() {
 }
 
 func rebootRequired() bool {
-	_, err := os.Stat("/host/var/run/reboot-required")
+	_, err := os.Stat("/var/run/reboot-required")
 	switch {
 	case err == nil:
 		return true
@@ -105,7 +104,8 @@ func root(cmd *cobra.Command, args []string) {
 			continue
 		}
 
-		drainCmd := exec.Command("/usr/local/bin/kubectl", "drain", nodeID)
+		drainCmd := exec.Command("/usr/local/bin/kubectl", "drain",
+			"--ignore-daemonsets", "--delete-local-data", "--force", nodeID)
 		if err := drainCmd.Run(); err != nil {
 			log.Fatalf("Error invoking drain command: %v", err)
 		}
