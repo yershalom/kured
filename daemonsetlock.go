@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/pkg/api/unversioned"
 )
 
-type dsl struct {
+type DaemonSetLock struct {
 	client     *kubernetes.Clientset
 	nodeID     string
 	namespace  string
@@ -17,11 +17,11 @@ type dsl struct {
 	annotation string
 }
 
-func NewDaemonSetLock(client *kubernetes.Clientset, nodeID, namespace, name, annotation string) *dsl {
-	return &dsl{client, nodeID, namespace, name, annotation}
+func NewDaemonSetLock(client *kubernetes.Clientset, nodeID, namespace, name, annotation string) *DaemonSetLock {
+	return &DaemonSetLock{client, nodeID, namespace, name, annotation}
 }
 
-func (dsl *dsl) Acquire() (acquired bool, owner string, err error) {
+func (dsl *DaemonSetLock) Acquire() (acquired bool, owner string, err error) {
 	for {
 		ds, err := dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Get(dsl.name)
 		if err != nil {
@@ -52,7 +52,7 @@ func (dsl *dsl) Acquire() (acquired bool, owner string, err error) {
 	}
 }
 
-func (dsl *dsl) Test() (holding bool, err error) {
+func (dsl *DaemonSetLock) Test() (holding bool, err error) {
 	ds, err := dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Get(dsl.name)
 	if err != nil {
 		return false, err
@@ -61,7 +61,7 @@ func (dsl *dsl) Test() (holding bool, err error) {
 	return ds.ObjectMeta.Annotations[dsl.annotation] == dsl.nodeID, nil
 }
 
-func (dsl *dsl) Release() error {
+func (dsl *DaemonSetLock) Release() error {
 	for {
 		ds, err := dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Get(dsl.name)
 		if err != nil {

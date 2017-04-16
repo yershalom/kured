@@ -54,6 +54,65 @@ func rebootRequired() bool {
 	}
 }
 
+func holding(lock *kured.DaemonSetLock) bool {
+	holding, err := lock.Test()
+	if err != nil {
+		log.Fatalf("Error testing lock: %v", err)
+	}
+	return holding
+}
+
+func acquire(lock *kured.DaemonSetLock) bool {
+	holding, holder, err := lock.Acquire()
+	switch {
+	case err != nil:
+		log.Fatalf("Error acquiring lock: %v", err)
+		return false
+	case !holding:
+		log.Warnf("Lock already held: %v", holder)
+		return false
+	default:
+		log.Infof("Acquired reboot lock")
+		return true
+	}
+}
+
+func release(lock *kured.DaemonSetLock) {
+	if err := lock.Release(); err != nil {
+		log.Fatalf("Error releasing lock: %v", err)
+	}
+}
+
+func drain(nodeID string) {
+	drainCmd := exec.Command("/usr/local/bin/kubectl", "drain",
+		"--ignore-daemonsets", "--delete-local-data", "--force", nodeID)
+	if err := drainCmd.Run(); err != nil {
+		log.Fatalf("Error invoking drain command: %v", err)
+	}
+}
+
+func uncordon(nodeID string) {
+	uncordonCmd := exec.Command("/usr/local/bin/kubectl", "uncordon", nodeID)
+	if err := uncordonCmd.Run(); err != nil {
+		log.Fatalf("Error invoking uncordon command: %v", err)
+	}
+}
+
+func reboot() {
+	// Relies on /var/run/dbus/system_bus_socket bind mount to talk to systemd
+	rebootCmd := exec.Command("/bin/systemctl", "reboot")
+	if err := rebootCmd.Run(); err != nil {
+		log.Fatalf("Error invoking reboot command: %v", err)
+	}
+}
+
+func waitForReboot() {
+	for {
+		log.Infof("Waiting for reboot")
+		time.Sleep(time.Minute)
+	}
+}
+
 func root(cmd *cobra.Command, args []string) {
 	nodeID := os.Getenv("KURED_NODE_ID")
 	if nodeID == "" {
@@ -72,56 +131,20 @@ func root(cmd *cobra.Command, args []string) {
 
 	lock := kured.NewDaemonSetLock(client, nodeID, dsNamespace, dsName, lockAnnotation)
 
-	holding, err := lock.Test()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if holding {
-		uncordonCmd := exec.Command("/usr/local/bin/kubectl", "uncordon", nodeID)
-		if err := uncordonCmd.Run(); err != nil {
-			log.Fatalf("Error invoking uncordon command: %v", err)
-		}
-
-		if err := lock.Release(); err != nil {
-			log.Fatal(err)
-		}
+	if holding(lock) {
+		uncordon(nodeID)
+		release(lock)
 	}
 
 	source := rand.NewSource(time.Now().UnixNano())
 	ticker := kured.NewDelayTick(source, time.Minute*time.Duration(period))
 	for _ = range ticker {
-		if !rebootRequired() {
-			continue
+		if rebootRequired() && acquire(lock) {
+			drain(nodeID)
+			reboot()
+			break
 		}
-
-		holding, holder, err := lock.Acquire()
-		switch {
-		case err != nil:
-			log.Fatalf("Error during lock acquisition: %v", err)
-		case !holding:
-			log.Warnf("Lock already held: %v", holder)
-			continue
-		}
-
-		drainCmd := exec.Command("/usr/local/bin/kubectl", "drain",
-			"--ignore-daemonsets", "--delete-local-data", "--force", nodeID)
-		if err := drainCmd.Run(); err != nil {
-			log.Fatalf("Error invoking drain command: %v", err)
-		}
-
-		// Relies on /var/run/dbus/system_bus_socket bind mount
-		rebootCmd := exec.Command("/bin/systemctl", "reboot")
-		if err := rebootCmd.Run(); err != nil {
-			log.Fatalf("Error invoking reboot command: %v", err)
-		}
-
-		break
 	}
 
-	// Wait indefinitely for reboot to occur
-	for {
-		log.Infof("Waiting for reboot")
-		time.Sleep(time.Minute)
-	}
+	waitForReboot()
 }
