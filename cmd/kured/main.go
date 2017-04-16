@@ -1,7 +1,10 @@
 package main
 
 import (
+	"math"
+	"math/rand"
 	"os"
+	"os/exec"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -39,6 +42,19 @@ func main() {
 	}
 }
 
+func rebootRequired() bool {
+	_, err := os.Stat("/host/var/run/reboot-required")
+	switch {
+	case err == nil:
+		return true
+	case os.IsNotExist(err):
+		return false
+	default:
+		log.Fatalf("Unable to determine if reboot required: %v", err)
+		return false // unreachable; prevents compilation error
+	}
+}
+
 func root(cmd *cobra.Command, args []string) {
 	nodeID := os.Getenv("KURED_NODE_ID")
 	if nodeID == "" {
@@ -63,24 +79,49 @@ func root(cmd *cobra.Command, args []string) {
 	}
 
 	if holding {
-		// TBD: Uncordon
+		uncordonCmd := exec.Command("/usr/local/bin/kubectl", "uncordon", nodeID)
+		if err := uncordonCmd.Run(); err != nil {
+			log.Fatalf("Error invoking uncordon command: %v", err)
+		}
 
 		if err := lock.Release(); err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	ticker := time.NewTicker(time.Minute * time.Duration(period))
-	for _ = range ticker.C {
-		holding, holder, err := lock.Acquire()
-		if err != nil {
-			log.Fatalf("Unable to acquire lock: %v", err)
-		}
-		if !holding {
-			log.Infof("Lock already held: %v", holder)
+	source := rand.NewSource(time.Now().UnixNano())
+	ticker := kured.NewDelayTick(source, time.Minute*time.Duration(period))
+	for _ = range ticker {
+		if !rebootRequired() {
 			continue
 		}
 
-		// TBD: Drain & reboot
+		holding, holder, err := lock.Acquire()
+		switch {
+		case err != nil:
+			log.Fatalf("Error during lock acquisition: %v", err)
+		case !holding:
+			log.Warnf("Lock already held: %v", holder)
+			continue
+		}
+
+		drainCmd := exec.Command("/usr/local/bin/kubectl", "drain", nodeID)
+		if err := drainCmd.Run(); err != nil {
+			log.Fatalf("Error invoking drain command: %v", err)
+		}
+
+		// Relies on /var/run/dbus/system_bus_socket bind mount
+		rebootCmd := exec.Command("/bin/systemctl", "reboot")
+		if err := rebootCmd.Run(); err != nil {
+			log.Fatalf("Error invoking reboot command: %v", err)
+		}
+
+		break
+	}
+
+	// Wait indefinitely for reboot to occur
+	for {
+		log.Infof("Waiting for reboot")
+		time.Sleep(time.Minute)
 	}
 }

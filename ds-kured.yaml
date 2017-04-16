@@ -25,6 +25,8 @@ spec:
           command:
             - /usr/bin/kured
           env:
+            # Pass in the name of the node on which this pod is scheduled
+            # for use with drain/uncordon operations and lock acquisition
             - name: KURED_NODE_ID
               valueFrom:
                 fieldRef:
@@ -32,8 +34,11 @@ spec:
           securityContext:
             privileged: true
           volumeMounts:
+            # Needed for two purposes:
+            # * Testing for the existence of /var/run/reboot-required
+            # * Accessing /var/run/dbus/system_bus_socket to effect reboot
             - name: hostrun
-              mountPath: /host/var/run
+              mountPath: /var/run
       restartPolicy: Always
       volumes:
         - name: hostrun
