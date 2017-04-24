@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	version        = "unreleased"
 	period         int
 	dsNamespace    string
 	dsName         string
