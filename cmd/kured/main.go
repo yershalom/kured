@@ -19,6 +19,7 @@ var (
 	dsNamespace    string
 	dsName         string
 	lockAnnotation string
+	prometheusURL  string
 )
 
 func main() {
@@ -35,6 +36,8 @@ func main() {
 		"name of daemonset on which to place lock")
 	rootCmd.PersistentFlags().StringVar(&lockAnnotation, "lock-annotation", "works.weave/kured-node-lock",
 		"annotation in which to record locking node")
+	rootCmd.PersistentFlags().StringVar(&prometheusURL, "prometheus-url", "",
+		"Prometheus instance to probe for active alarms")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
@@ -52,6 +55,21 @@ func rebootRequired() bool {
 		log.Fatalf("Unable to determine if reboot required: %v", err)
 		return false // unreachable; prevents compilation error
 	}
+}
+
+func rebootBlocked() bool {
+	if prometheusURL != "" {
+		count, err := kured.CountActiveAlerts(prometheusURL)
+		if err != nil {
+			log.Warnf("Error probing Prometheus for active alarms: %v", err)
+			return true
+		}
+		if count > 0 {
+			log.Warnf("Reboot blocked: %d active alerts", count)
+			return true
+		}
+	}
+	return false
 }
 
 func holding(lock *kured.DaemonSetLock) bool {
@@ -139,7 +157,7 @@ func root(cmd *cobra.Command, args []string) {
 	source := rand.NewSource(time.Now().UnixNano())
 	ticker := kured.NewDelayTick(source, time.Minute*time.Duration(period))
 	for _ = range ticker {
-		if rebootRequired() && acquire(lock) {
+		if rebootRequired() && !rebootBlocked() && acquire(lock) {
 			drain(nodeID)
 			reboot()
 			break
