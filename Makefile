@@ -1,5 +1,5 @@
 .DEFAULT: all
-.PHONY: all clean image publish-image
+.PHONY: all clean image publish-image minikube-publish
 
 DH_ORG=weaveworks
 IMAGE_TAG=latest
@@ -30,3 +30,6 @@ image: build/.image.done
 
 publish-image: image
 	sudo docker push $(DH_ORG)/kured:$(IMAGE_TAG)
+
+minikube-publish: image
+	sudo docker save $(DH_ORG)/kured:$(IMAGE_TAG) | (eval $$(minikube docker-env) && docker load)
