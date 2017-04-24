@@ -1,4 +1,4 @@
-package kured
+package daemonsetlock
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ type DaemonSetLock struct {
 	annotation string
 }
 
-func NewDaemonSetLock(client *kubernetes.Clientset, nodeID, namespace, name, annotation string) *DaemonSetLock {
+func New(client *kubernetes.Clientset, nodeID, namespace, name, annotation string) *DaemonSetLock {
 	return &DaemonSetLock{client, nodeID, namespace, name, annotation}
 }
 

@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/weaveworks/kured"
 	"github.com/weaveworks/kured/pkg/alerts"
+	"github.com/weaveworks/kured/pkg/daemonsetlock"
 	"github.com/weaveworks/kured/pkg/delaytick"
 )
 
@@ -74,7 +74,7 @@ func rebootBlocked() bool {
 	return false
 }
 
-func holding(lock *kured.DaemonSetLock) bool {
+func holding(lock *daemonsetlock.DaemonSetLock) bool {
 	holding, err := lock.Test()
 	if err != nil {
 		log.Fatalf("Error testing lock: %v", err)
@@ -82,7 +82,7 @@ func holding(lock *kured.DaemonSetLock) bool {
 	return holding
 }
 
-func acquire(lock *kured.DaemonSetLock) bool {
+func acquire(lock *daemonsetlock.DaemonSetLock) bool {
 	holding, holder, err := lock.Acquire()
 	switch {
 	case err != nil:
@@ -97,7 +97,7 @@ func acquire(lock *kured.DaemonSetLock) bool {
 	}
 }
 
-func release(lock *kured.DaemonSetLock) {
+func release(lock *daemonsetlock.DaemonSetLock) {
 	if err := lock.Release(); err != nil {
 		log.Fatalf("Error releasing lock: %v", err)
 	}
@@ -149,7 +149,7 @@ func root(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	lock := kured.NewDaemonSetLock(client, nodeID, dsNamespace, dsName, lockAnnotation)
+	lock := daemonsetlock.New(client, nodeID, dsNamespace, dsName, lockAnnotation)
 
 	if holding(lock) {
 		uncordon(nodeID)
