@@ -13,6 +13,7 @@ import (
 
 	"github.com/weaveworks/kured"
 	"github.com/weaveworks/kured/pkg/alerts"
+	"github.com/weaveworks/kured/pkg/delaytick"
 )
 
 var (
@@ -156,8 +157,8 @@ func root(cmd *cobra.Command, args []string) {
 	}
 
 	source := rand.NewSource(time.Now().UnixNano())
-	ticker := kured.NewDelayTick(source, time.Minute*time.Duration(period))
-	for _ = range ticker {
+	tick := delaytick.New(source, time.Minute*time.Duration(period))
+	for _ = range tick {
 		if rebootRequired() && !rebootBlocked() && acquire(lock) {
 			drain(nodeID)
 			reboot()

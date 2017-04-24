@@ -1,4 +1,4 @@
-package kured
+package delaytick
 
 import (
 	"math/rand"
@@ -6,7 +6,7 @@ import (
 )
 
 // Tick regularly after an initial delay randomly distributed between d/2 and d + d/2
-func NewDelayTick(s rand.Source, d time.Duration) <-chan time.Time {
+func New(s rand.Source, d time.Duration) <-chan time.Time {
 	c := make(chan time.Time)
 
 	go func() {
