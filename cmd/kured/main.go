@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/weaveworks/kured"
+	"github.com/weaveworks/kured/pkg/alerts"
 )
 
 var (
@@ -59,7 +60,7 @@ func rebootRequired() bool {
 
 func rebootBlocked() bool {
 	if prometheusURL != "" {
-		count, err := kured.CountActiveAlerts(prometheusURL)
+		count, err := alerts.PrometheusCountActive(prometheusURL)
 		if err != nil {
 			log.Warnf("Error probing Prometheus for active alarms: %v", err)
 			return true

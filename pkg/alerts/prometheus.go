@@ -1,4 +1,4 @@
-package kured
+package alerts
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 // Return true if there are any active (e.g. pending or firing) alerts
-func CountActiveAlerts(prometheusURL string) (int, error) {
+func PrometheusCountActive(prometheusURL string) (int, error) {
 	client, err := prometheus.New(prometheus.Config{Address: prometheusURL})
 	if err != nil {
 		return 0, err
@@ -25,6 +25,7 @@ func CountActiveAlerts(prometheusURL string) (int, error) {
 
 	if value.Type() == model.ValVector {
 		if vector, ok := value.(model.Vector); ok {
+			// Vector contains only pending/firing alerts, no filtering required
 			return len(vector), nil
 		}
 	}
