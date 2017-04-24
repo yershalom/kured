@@ -21,9 +21,12 @@ spec:
     spec:
       containers:
         - name: kured
-          image: weaveworks/kured
+          image: weaveworks/kured:latest
+          imagePullPolicy: IfNotPresent
           command:
             - /usr/bin/kured
+          args:
+            - --period=1
           env:
             # Pass in the name of the node on which this pod is scheduled
             # for use with drain/uncordon operations and lock acquisition
