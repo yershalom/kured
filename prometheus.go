@@ -18,7 +18,7 @@ func CountActiveAlerts(prometheusURL string) (int, error) {
 
 	queryAPI := prometheus.NewQueryAPI(client)
 
-	value, err := queryAPI.Query(context.TODO(), "ALERTS", time.Now())
+	value, err := queryAPI.Query(context.Background(), "ALERTS", time.Now())
 	if err != nil {
 		return 0, err
 	}
