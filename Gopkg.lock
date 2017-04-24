@@ -1,4 +1,4 @@
-memo = "a2c43aec64b65b2960b5bef6729ecaf68489293388368733493bde01ccc6fc35"
+memo = "758e136fb047a3fbb8746d2e83a9e11d341db8e16e4ddc78bc0e8b41038f023b"
 
 [[projects]]
   name = "github.com/PuerkitoBio/purell"
@@ -94,7 +94,7 @@ memo = "a2c43aec64b65b2960b5bef6729ecaf68489293388368733493bde01ccc6fc35"
   branch = "master"
   name = "github.com/go-openapi/swag"
   packages = ["."]
-  revision = "aa30237cf993e01e1a1e467eead45d1ce5ad155e"
+  revision = "24ebf76d720bab64f62824d76bced3184a65490d"
 
 [[projects]]
   branch = "master"
@@ -152,6 +152,18 @@ memo = "a2c43aec64b65b2960b5bef6729ecaf68489293388368733493bde01ccc6fc35"
 
 [[projects]]
   branch = "master"
+  name = "github.com/prometheus/client_golang"
+  packages = ["api/prometheus"]
+  revision = "5636dc67ae776adf5590da7349e70fbb9559972d"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+  packages = ["model"]
+  revision = "ebdfc6da46522d58825777cf1f90490a5b1ef1d8"
+
+[[projects]]
+  branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
   revision = "b24564e919247d7c870fe0ed3738c98d8741aca4"
@@ -190,7 +202,7 @@ memo = "a2c43aec64b65b2960b5bef6729ecaf68489293388368733493bde01ccc6fc35"
   branch = "master"
   name = "golang.org/x/text"
   packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm","width"]
-  revision = "f4b4367115ec2de254587813edaa901bc1c723a8"
+  revision = "a9a820217f98f7c8a207ec1e45a874e1fe12c478"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -209,6 +221,12 @@ memo = "a2c43aec64b65b2960b5bef6729ecaf68489293388368733493bde01ccc6fc35"
   name = "gopkg.in/inf.v0"
   packages = ["."]
   revision = "3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4"
+
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b"
 
 [[projects]]
   name = "k8s.io/client-go"

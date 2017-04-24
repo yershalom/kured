@@ -5,6 +5,14 @@
 
 [[dependencies]]
   branch = "master"
+  name = "github.com/prometheus/client_golang"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+
+[[dependencies]]
+  branch = "master"
   name = "github.com/spf13/cobra"
 
 [[dependencies]]
