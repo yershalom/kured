@@ -51,8 +51,10 @@ func rebootRequired() bool {
 	_, err := os.Stat("/var/run/reboot-required")
 	switch {
 	case err == nil:
+		log.Infof("Reboot required")
 		return true
 	case os.IsNotExist(err):
+		log.Infof("Reboot not required")
 		return false
 	default:
 		log.Fatalf("Unable to determine if reboot required: %v", err)
@@ -64,7 +66,7 @@ func rebootBlocked() bool {
 	if prometheusURL != "" {
 		count, err := alerts.PrometheusCountActive(prometheusURL)
 		if err != nil {
-			log.Warnf("Error probing Prometheus for active alarms: %v", err)
+			log.Warnf("Reboot blocked: prometheus query error: %v", err)
 			return true
 		}
 		if count > 0 {
@@ -79,6 +81,9 @@ func holding(lock *daemonsetlock.DaemonSetLock) bool {
 	holding, err := lock.Test()
 	if err != nil {
 		log.Fatalf("Error testing lock: %v", err)
+	}
+	if holding {
+		log.Infof("Holding lock")
 	}
 	return holding
 }
@@ -99,12 +104,14 @@ func acquire(lock *daemonsetlock.DaemonSetLock) bool {
 }
 
 func release(lock *daemonsetlock.DaemonSetLock) {
+	log.Infof("Releasing lock")
 	if err := lock.Release(); err != nil {
 		log.Fatalf("Error releasing lock: %v", err)
 	}
 }
 
 func drain(nodeID string) {
+	log.Infof("Draining node %s", nodeID)
 	drainCmd := exec.Command("/usr/bin/kubectl", "drain",
 		"--ignore-daemonsets", "--delete-local-data", "--force", nodeID)
 	if err := drainCmd.Run(); err != nil {
@@ -113,6 +120,7 @@ func drain(nodeID string) {
 }
 
 func uncordon(nodeID string) {
+	log.Infof("Uncordoning node %s", nodeID)
 	uncordonCmd := exec.Command("/usr/bin/kubectl", "uncordon", nodeID)
 	if err := uncordonCmd.Run(); err != nil {
 		log.Fatalf("Error invoking uncordon command: %v", err)
@@ -120,6 +128,7 @@ func uncordon(nodeID string) {
 }
 
 func reboot() {
+	log.Infof("Commanding reboot")
 	// Relies on /var/run/dbus/system_bus_socket bind mount to talk to systemd
 	rebootCmd := exec.Command("/bin/systemctl", "reboot")
 	if err := rebootCmd.Run(); err != nil {
