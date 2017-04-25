@@ -105,7 +105,7 @@ func release(lock *daemonsetlock.DaemonSetLock) {
 }
 
 func drain(nodeID string) {
-	drainCmd := exec.Command("/usr/local/bin/kubectl", "drain",
+	drainCmd := exec.Command("/usr/bin/kubectl", "drain",
 		"--ignore-daemonsets", "--delete-local-data", "--force", nodeID)
 	if err := drainCmd.Run(); err != nil {
 		log.Fatalf("Error invoking drain command: %v", err)
@@ -113,7 +113,7 @@ func drain(nodeID string) {
 }
 
 func uncordon(nodeID string) {
-	uncordonCmd := exec.Command("/usr/local/bin/kubectl", "uncordon", nodeID)
+	uncordonCmd := exec.Command("/usr/bin/kubectl", "uncordon", nodeID)
 	if err := uncordonCmd.Run(); err != nil {
 		log.Fatalf("Error invoking uncordon command: %v", err)
 	}
