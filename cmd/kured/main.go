@@ -23,6 +23,7 @@ var (
 	dsName         string
 	lockAnnotation string
 	prometheusURL  string
+	rebootSentinel string
 )
 
 func main() {
@@ -41,6 +42,8 @@ func main() {
 		"annotation in which to record locking node")
 	rootCmd.PersistentFlags().StringVar(&prometheusURL, "prometheus-url", "",
 		"Prometheus instance to probe for active alarms")
+	rootCmd.PersistentFlags().StringVar(&rebootSentinel, "reboot-sentinel", "/var/run/reboot-required",
+		"path to file whose existence signals need to reboot")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
@@ -48,7 +51,7 @@ func main() {
 }
 
 func rebootRequired() bool {
-	_, err := os.Stat("/var/run/reboot-required")
+	_, err := os.Stat(rebootSentinel)
 	switch {
 	case err == nil:
 		log.Infof("Reboot required")
@@ -144,10 +147,16 @@ func waitForReboot() {
 }
 
 func root(cmd *cobra.Command, args []string) {
+	log.Infof("Kubernetes Reboot Daemon: %s", version)
+
 	nodeID := os.Getenv("KURED_NODE_ID")
 	if nodeID == "" {
 		log.Fatal("KURED_NODE_ID environment variable required")
 	}
+
+	log.Infof("Node ID: %s", nodeID)
+	log.Infof("Lock Annotation: %s/%s:%s", dsNamespace, dsName, lockAnnotation)
+	log.Infof("Reboot Sentinel: %s every %d minutes", rebootSentinel, period)
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
