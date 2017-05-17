@@ -23,13 +23,13 @@ cmd/kured/kured: cmd/kured/*.go
 build/.image.done: cmd/kured/Dockerfile cmd/kured/kured
 	mkdir -p build
 	cp $^ build
-	sudo docker build -t $(DH_ORG)/kured:$(IMAGE_TAG) -f build/Dockerfile ./build
+	sudo -E docker build -t $(DH_ORG)/kured:$(IMAGE_TAG) -f build/Dockerfile ./build
 	touch $@
 
 image: build/.image.done
 
 publish-image: image
-	sudo docker push $(DH_ORG)/kured:$(IMAGE_TAG)
+	sudo -E docker push $(DH_ORG)/kured:$(IMAGE_TAG)
 
 minikube-publish: image
-	sudo docker save $(DH_ORG)/kured:$(IMAGE_TAG) | (eval $$(minikube docker-env) && docker load)
+	sudo -E docker save $(DH_ORG)/kured:$(IMAGE_TAG) | (eval $$(minikube docker-env) && docker load)

@@ -39,7 +39,7 @@ func main() {
 		"namespace containing daemonset on which to place lock")
 	rootCmd.PersistentFlags().StringVar(&dsName, "ds-namespace", "kured",
 		"name of daemonset on which to place lock")
-	rootCmd.PersistentFlags().StringVar(&lockAnnotation, "lock-annotation", "works.weave/kured-node-lock",
+	rootCmd.PersistentFlags().StringVar(&lockAnnotation, "lock-annotation", "weave.works/kured-node-lock",
 		"annotation in which to record locking node")
 	rootCmd.PersistentFlags().StringVar(&prometheusURL, "prometheus-url", "",
 		"Prometheus instance to probe for active alarms")
@@ -131,7 +131,7 @@ func uncordon(nodeID string) {
 	}
 }
 
-func waitForDrain(client *kubernetes.Clientset) {
+func waitForDrain(client *kubernetes.Clientset, nodeID string) {
 	for {
 		var unterminated int
 
@@ -148,7 +148,9 @@ func waitForDrain(client *kubernetes.Clientset) {
 			}
 
 			for _, pod := range pods.Items {
-				if pod.Status.Phase != "Succeeded" && pod.Status.Phase != "Failed" {
+				if pod.Spec.NodeName != nodeID ||
+					(pod.Status.Phase != "Succeeded" &&
+						pod.Status.Phase != "Failed") {
 					unterminated++
 				}
 			}
@@ -181,7 +183,7 @@ func waitForReboot() {
 
 // nodeMeta is used to remember information across reboots
 type nodeMeta struct {
-	Unschedulable bool
+	Unschedulable bool `json:"unschedulable"`
 }
 
 func root(cmd *cobra.Command, args []string) {
@@ -228,7 +230,7 @@ func root(cmd *cobra.Command, args []string) {
 		if rebootRequired() && !rebootBlocked() && acquire(lock, &nodeMeta) {
 			if !nodeMeta.Unschedulable {
 				drain(nodeID)
-				waitForDrain(client)
+				waitForDrain(client, nodeID)
 			}
 			reboot()
 			break
