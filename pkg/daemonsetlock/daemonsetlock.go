@@ -1,6 +1,7 @@
 package daemonsetlock
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -17,26 +18,40 @@ type DaemonSetLock struct {
 	annotation string
 }
 
+type lockAnnotationValue struct {
+	NodeID   string      `json:"nodeID"`
+	Metadata interface{} `json:"metadata,omitempty"`
+}
+
 func New(client *kubernetes.Clientset, nodeID, namespace, name, annotation string) *DaemonSetLock {
 	return &DaemonSetLock{client, nodeID, namespace, name, annotation}
 }
 
-func (dsl *DaemonSetLock) Acquire() (acquired bool, owner string, err error) {
+func (dsl *DaemonSetLock) Acquire(metadata interface{}) (acquired bool, owner string, err error) {
 	for {
 		ds, err := dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Get(dsl.name)
 		if err != nil {
 			return false, "", err
 		}
 
-		holder, exists := ds.ObjectMeta.Annotations[dsl.annotation]
+		valueString, exists := ds.ObjectMeta.Annotations[dsl.annotation]
 		if exists {
-			return holder == dsl.nodeID, holder, nil
+			value := lockAnnotationValue{}
+			if err := json.Unmarshal([]byte(valueString), &value); err != nil {
+				return false, "", err
+			}
+			return value.NodeID == dsl.nodeID, value.NodeID, nil
 		}
 
 		if ds.ObjectMeta.Annotations == nil {
 			ds.ObjectMeta.Annotations = make(map[string]string)
 		}
-		ds.ObjectMeta.Annotations[dsl.annotation] = dsl.nodeID
+		value := lockAnnotationValue{NodeID: dsl.nodeID, Metadata: metadata}
+		valueBytes, err := json.Marshal(&value)
+		if err != nil {
+			return false, "", err
+		}
+		ds.ObjectMeta.Annotations[dsl.annotation] = string(valueBytes)
 
 		_, err = dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Update(ds)
 		if err != nil {
@@ -52,13 +67,22 @@ func (dsl *DaemonSetLock) Acquire() (acquired bool, owner string, err error) {
 	}
 }
 
-func (dsl *DaemonSetLock) Test() (holding bool, err error) {
+func (dsl *DaemonSetLock) Test(metadata interface{}) (holding bool, err error) {
 	ds, err := dsl.client.ExtensionsV1beta1().DaemonSets(dsl.namespace).Get(dsl.name)
 	if err != nil {
 		return false, err
 	}
 
-	return ds.ObjectMeta.Annotations[dsl.annotation] == dsl.nodeID, nil
+	valueString, exists := ds.ObjectMeta.Annotations[dsl.annotation]
+	if exists {
+		value := lockAnnotationValue{Metadata: metadata}
+		if err := json.Unmarshal([]byte(valueString), &value); err != nil {
+			return false, err
+		}
+		return value.NodeID == dsl.nodeID, nil
+	}
+
+	return false, nil
 }
 
 func (dsl *DaemonSetLock) Release() error {
@@ -68,12 +92,17 @@ func (dsl *DaemonSetLock) Release() error {
 			return err
 		}
 
-		holder, exists := ds.ObjectMeta.Annotations[dsl.annotation]
-		switch {
-		case !exists:
+		valueString, exists := ds.ObjectMeta.Annotations[dsl.annotation]
+		if exists {
+			value := lockAnnotationValue{}
+			if err := json.Unmarshal([]byte(valueString), &value); err != nil {
+				return err
+			}
+			if value.NodeID != dsl.nodeID {
+				return fmt.Errorf("Not lock holder: %v", value.NodeID)
+			}
+		} else {
 			return fmt.Errorf("Lock not held")
-		case holder != dsl.nodeID:
-			return fmt.Errorf("Not lock holder: %v", holder)
 		}
 
 		delete(ds.ObjectMeta.Annotations, dsl.annotation)

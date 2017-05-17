@@ -80,8 +80,8 @@ func rebootBlocked() bool {
 	return false
 }
 
-func holding(lock *daemonsetlock.DaemonSetLock) bool {
-	holding, err := lock.Test()
+func holding(lock *daemonsetlock.DaemonSetLock, metadata interface{}) bool {
+	holding, err := lock.Test(metadata)
 	if err != nil {
 		log.Fatalf("Error testing lock: %v", err)
 	}
@@ -91,8 +91,8 @@ func holding(lock *daemonsetlock.DaemonSetLock) bool {
 	return holding
 }
 
-func acquire(lock *daemonsetlock.DaemonSetLock) bool {
-	holding, holder, err := lock.Acquire()
+func acquire(lock *daemonsetlock.DaemonSetLock, metadata interface{}) bool {
+	holding, holder, err := lock.Acquire(metadata)
 	switch {
 	case err != nil:
 		log.Fatalf("Error acquiring lock: %v", err)
@@ -146,6 +146,11 @@ func waitForReboot() {
 	}
 }
 
+// nodeMeta is used to remember information across reboots
+type nodeMeta struct {
+	Unschedulable bool
+}
+
 func root(cmd *cobra.Command, args []string) {
 	log.Infof("Kubernetes Reboot Daemon: %s", version)
 
@@ -170,16 +175,27 @@ func root(cmd *cobra.Command, args []string) {
 
 	lock := daemonsetlock.New(client, nodeID, dsNamespace, dsName, lockAnnotation)
 
-	if holding(lock) {
-		uncordon(nodeID)
+	nodeMeta := nodeMeta{}
+	if holding(lock, &nodeMeta) {
+		if !nodeMeta.Unschedulable {
+			uncordon(nodeID)
+		}
 		release(lock)
+	} else {
+		node, err := client.CoreV1().Nodes().Get(nodeID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		nodeMeta.Unschedulable = node.Spec.Unschedulable
 	}
 
 	source := rand.NewSource(time.Now().UnixNano())
 	tick := delaytick.New(source, time.Minute*time.Duration(period))
 	for _ = range tick {
-		if rebootRequired() && !rebootBlocked() && acquire(lock) {
-			drain(nodeID)
+		if rebootRequired() && !rebootBlocked() && acquire(lock, &nodeMeta) {
+			if !nodeMeta.Unschedulable {
+				drain(nodeID)
+			}
 			reboot()
 			break
 		}
