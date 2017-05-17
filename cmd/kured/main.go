@@ -9,6 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/rest"
 
 	"github.com/weaveworks/kured/pkg/alerts"
@@ -130,6 +131,38 @@ func uncordon(nodeID string) {
 	}
 }
 
+func waitForDrain(client *kubernetes.Clientset) {
+	for {
+		var unterminated int
+
+		namespaces, err := client.CoreV1().Namespaces().List(v1.ListOptions{})
+		if err != nil {
+			log.Fatalf("Error waiting for drain: %v", err)
+		}
+
+		for _, namespace := range namespaces.Items {
+			drainCandidates := v1.ListOptions{LabelSelector: "ignore_on_drain!=true"}
+			pods, err := client.CoreV1().Pods(namespace.ObjectMeta.Name).List(drainCandidates)
+			if err != nil {
+				log.Fatalf("Error waiting for drain: %v", err)
+			}
+
+			for _, pod := range pods.Items {
+				if pod.Status.Phase != "Succeeded" && pod.Status.Phase != "Failed" {
+					unterminated++
+				}
+			}
+		}
+
+		if unterminated == 0 {
+			return
+		}
+
+		log.Infof("Waiting for %d pods to terminate", unterminated)
+		time.Sleep(time.Minute)
+	}
+}
+
 func reboot() {
 	log.Infof("Commanding reboot")
 	// Relies on /var/run/dbus/system_bus_socket bind mount to talk to systemd
@@ -195,6 +228,7 @@ func root(cmd *cobra.Command, args []string) {
 		if rebootRequired() && !rebootBlocked() && acquire(lock, &nodeMeta) {
 			if !nodeMeta.Unschedulable {
 				drain(nodeID)
+				waitForDrain(client)
 			}
 			reboot()
 			break
