@@ -148,9 +148,9 @@ func waitForDrain(client *kubernetes.Clientset, nodeID string) {
 			}
 
 			for _, pod := range pods.Items {
-				if pod.Spec.NodeName != nodeID ||
-					(pod.Status.Phase != "Succeeded" &&
-						pod.Status.Phase != "Failed") {
+				if pod.Spec.NodeName == nodeID &&
+					pod.Status.Phase != "Succeeded" &&
+					pod.Status.Phase != "Failed" {
 					unterminated++
 				}
 			}
