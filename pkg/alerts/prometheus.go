@@ -3,6 +3,7 @@ package alerts
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/prometheus/client_golang/api/prometheus"
@@ -10,7 +11,7 @@ import (
 )
 
 // Return true if there are any active (e.g. pending or firing) alerts
-func PrometheusCountActive(prometheusURL string) (int, error) {
+func PrometheusCountActive(prometheusURL string, filter *regexp.Regexp) (int, error) {
 	client, err := prometheus.New(prometheus.Config{Address: prometheusURL})
 	if err != nil {
 		return 0, err
@@ -25,8 +26,15 @@ func PrometheusCountActive(prometheusURL string) (int, error) {
 
 	if value.Type() == model.ValVector {
 		if vector, ok := value.(model.Vector); ok {
-			// Vector contains only pending/firing alerts, no filtering required
-			return len(vector), nil
+			var count int
+			for _, sample := range vector {
+				if alertName, isAlert := sample.Metric[model.AlertNameLabel]; isAlert {
+					if filter == nil || !filter.MatchString(string(alertName)) {
+						count++
+					}
+				}
+			}
+			return count, nil
 		}
 	}
 

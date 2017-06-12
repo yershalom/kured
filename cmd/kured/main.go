@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"regexp"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -24,6 +25,7 @@ var (
 	dsName         string
 	lockAnnotation string
 	prometheusURL  string
+	alertFilter    *regexp.Regexp
 	rebootSentinel string
 )
 
@@ -42,7 +44,9 @@ func main() {
 	rootCmd.PersistentFlags().StringVar(&lockAnnotation, "lock-annotation", "weave.works/kured-node-lock",
 		"annotation in which to record locking node")
 	rootCmd.PersistentFlags().StringVar(&prometheusURL, "prometheus-url", "",
-		"Prometheus instance to probe for active alarms")
+		"Prometheus instance to probe for active alerts")
+	rootCmd.PersistentFlags().Var(&regexpValue{&alertFilter}, "alert-filter-regexp",
+		"alert names to ignore when checking for active alerts")
 	rootCmd.PersistentFlags().StringVar(&rebootSentinel, "reboot-sentinel", "/var/run/reboot-required",
 		"path to file whose existence signals need to reboot")
 
@@ -68,7 +72,7 @@ func rebootRequired() bool {
 
 func rebootBlocked() bool {
 	if prometheusURL != "" {
-		count, err := alerts.PrometheusCountActive(prometheusURL)
+		count, err := alerts.PrometheusCountActive(prometheusURL, alertFilter)
 		if err != nil {
 			log.Warnf("Reboot blocked: prometheus query error: %v", err)
 			return true

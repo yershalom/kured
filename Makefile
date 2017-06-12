@@ -18,7 +18,7 @@ VERSION=git-$(shell git rev-parse --short=12 HEAD)
 
 cmd/kured/kured: $(DEPS)
 cmd/kured/kured: cmd/kured/*.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X main.version=$(VERSION)" -o $@ cmd/kured/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X main.version=$(VERSION)" -o $@ cmd/kured/*.go
 
 build/.image.done: cmd/kured/Dockerfile cmd/kured/kured
 	mkdir -p build
