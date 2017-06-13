@@ -1,8 +1,16 @@
+
+* [Introduction](#introduction)
+* [Configuration](#configuration)
+	* [Reboot Sentinel File & Period](#reboot-sentinel-file-&-period)
+	* [Blocking Reboots via Alerts](#blocking-reboots-via-alerts)
+	* [Overriding Lock Configuration](#overriding-lock-configuration)
+* [Building](#building)
+
 ## Introduction
 
-Kured (KUbernets REboot Daemon) is a Kubernetes daemonset that performs safe
-automatic node reboots when it is required to do so by package management
-system of the underlying OS.
+Kured (KUbernets REboot Daemon) is a Kubernetes daemonset that
+performs safe automatic node reboots when it is requested by the
+package management system of the underlying OS.
 
 * Watches for the presence of a reboot sentinel e.g. `/var/run/reboot-required` 
 * Utilises a lock in the API server to ensure only one node reboots at
@@ -37,15 +45,14 @@ nodes don't all contend for the lock simultaneously.
 
 You may find it desirable to block automatic node reboots when there
 are active alerts - you can do so by providing the URL of your
-Prometheus server with `--prometheus-url`:
+Prometheus server:
 
 ```
 --prometheus-url=http://prometheus.monitoring.svc.cluster.local
 ```
 
 By default the presence of /any/ active (pending or firing) alerts
-will block reboots, however you can ignore specific alerts with
-`--alert-filter-regexp`:
+will block reboots, however you can ignore specific alerts:
 
 ```
 --alert-filter-regexp=^(BenignAlert|AnotherBenignAlert|...$
