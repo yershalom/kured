@@ -1,48 +1,69 @@
-WIP Kubernetes Reboot Daemon
+## Introduction
 
-Outstanding work:
+Kured (KUbernets REboot Daemon) is a Kubernetes daemonset that performs safe
+automatic node reboots when it is required to do so by package management
+system of the underlying OS.
 
-* Testing
+* Watches for the presence of a reboot sentinel e.g. `/var/run/reboot-required` 
+* Utilises a lock in the API server to ensure only one node reboots at
+  a time
+* Optionally defers reboots in the presence of active Prometheus alerts
+* Cordons & drains worker nodes before reboot, uncordoning them after
 
-# kubectl annoyance
+## Configuration
 
-$ kubectl-1.4.8 --kubeconfig=ansible/dev/kubeconfig drain --delete-local-data --force --ignore-daemonsets ip-172-20-1-135.ec2.internal
-Error from server: Operation cannot be fulfilled on nodes "ip-172-20-1-135.ec2.internal": the object has been modified; please apply your changes to the latest version and try again
-2017-04-27 12:25:06 [2636] awh@terraqueous:~/workspace/service-conf [master] 
-$ echo $?
-1
-2017-04-27 12:25:17 [2637] awh@terraqueous:~/workspace/service-conf [master] 
-$ kubectl-1.4.8 --kubeconfig=ansible/dev/kubeconfig drain --delete-local-data --force --ignore-daemonsets ip-172-20-1-135.ec2.internal
-node "ip-172-20-1-135.ec2.internal" cordoned
-WARNING: Deleting pods not managed by ReplicationController, ReplicaSet, Job, or DaemonSet: kube-proxy-ip-172-20-1-135.ec2.internal; Ignoring DaemonSet-managed pods: kured-qc4md, scope-probe-master-ddfw7, fluentd-loggly-vrblq, prom-node-exporter-b7woj, reboot-required-i8xwz; Deleting pods with local storage: terradiff-792849672-69ukn
-pod "consul-3919604694-9j0iy" deleted
-pod "ingester-2514985883-ten3a" deleted
-pod "memcached-2323247251-txjqd" deleted
-pod "users-db-exporter-1123349103-kbl92" deleted
-pod "demo-3909231545-pgod1" deleted
-pod "launch-generator-3829894089-vu8du" deleted
-pod "fluxsvc-3308921893-xxnqp" deleted
-pod "memcached-1940254774-3b0av" deleted
-pod "kube-dns-2757152549-iwuy2" deleted
-pod "scope-app-1386610216-qstg6" deleted
-pod "compare-revisions-3366969505-bdl37" deleted
-pod "metrics-873123495-nffld" deleted
-pod "terradiff-792849672-69ukn" deleted
-pod "collection-1189917692-flv0s" deleted
-pod "query-2969484575-1ipnl" deleted
-pod "demo-3909231545-pgod1" deleted
-pod "launch-generator-3829894089-vu8du" deleted
-pod "memcached-1940254774-3b0av" deleted
-pod "memcached-2323247251-txjqd" deleted
-pod "users-db-exporter-1123349103-kbl92" deleted
-pod "scope-app-1386610216-qstg6" deleted
-pod "metrics-873123495-nffld" deleted
-pod "query-2969484575-1ipnl" deleted
-pod "terradiff-792849672-69ukn" deleted
-pod "collection-1189917692-flv0s" deleted
-pod "consul-3919604694-9j0iy" deleted
-pod "fluxsvc-3308921893-xxnqp" deleted
-pod "kube-dns-2757152549-iwuy2" deleted
-pod "compare-revisions-3366969505-bdl37" deleted
-pod "ingester-2514985883-ten3a" deleted
-node "ip-172-20-1-135.ec2.internal" drained
+The following arguments can be passed to kured via the daemonset pod template:
+
+```
+Flags:
+      --alert-filter-regexp value   alert names to ignore when checking for active alerts
+      --ds-name string              namespace containing daemonset on which to place lock (default "kube-system")
+      --ds-namespace string         name of daemonset on which to place lock (default "kured")
+      --lock-annotation string      annotation in which to record locking node (default "weave.works/kured-node-lock")
+      --period int                  reboot check period in minutes (default 60)
+      --prometheus-url string       Prometheus instance to probe for active alerts
+      --reboot-sentinel string      path to file whose existence signals need to reboot (default "/var/run/reboot-required")
+```
+
+### Reboot Sentinel File & Period
+
+By default kured checks for the existence of
+`/var/run/reboot-required` every sixty minutes; you can override these
+values with `--reboot-sentinel` and `--period`. Each instance of the
+reboot uses a random offset derived from the period on startup so that
+nodes don't all contend for the lock simultaneously.
+
+### Blocking Reboots via Alerts
+
+You may find it desirable to block automatic node reboots when there
+are active alerts - you can do so by providing the URL of your
+Prometheus server with `--prometheus-url`:
+
+```
+--prometheus-url=http://prometheus.monitoring.svc.cluster.local
+```
+
+By default the presence of /any/ active (pending or firing) alerts
+will block reboots, however you can ignore specific alerts with
+`--alert-filter-regexp`:
+
+```
+--alert-filter-regexp=^(BenignAlert|AnotherBenignAlert|...$
+```
+
+### Overriding Lock Configuration
+
+The `--ds-name` and `--ds-namespace` arguments should match the name and
+namespace of the daemonset used to deploy the reboot daemon - the locking is
+implemented by means of an annotation on this resource. The defaults match
+the daemonset YAML provided in the repository.
+
+Similarly `--lock-annotation` can be used to change the name of the
+annotation kured will use to store the lock, but the default is almost
+certainly safe.
+
+## Building
+
+```
+dep ensure && make
+```
