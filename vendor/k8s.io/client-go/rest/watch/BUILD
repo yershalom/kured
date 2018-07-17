@@ -12,6 +12,7 @@ go_library(
         "decoder.go",
         "encoder.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/rest/watch",
     importpath = "k8s.io/client-go/rest/watch",
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",

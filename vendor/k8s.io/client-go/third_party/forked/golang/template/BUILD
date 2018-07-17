@@ -11,6 +11,7 @@ go_library(
         "exec.go",
         "funcs.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/third_party/forked/golang/template",
     importpath = "k8s.io/client-go/third_party/forked/golang/template",
 )
 

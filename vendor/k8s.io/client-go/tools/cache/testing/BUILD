@@ -1,25 +1,11 @@
 package(default_visibility = ["//visibility:public"])
 
-load(
-    "@io_bazel_rules_go//go:def.bzl",
-    "go_library",
-    "go_test",
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = ["fake_controller_source_test.go"],
-    embed = [":go_default_library"],
-    deps = [
-        "//vendor/k8s.io/api/core/v1:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/watch:go_default_library",
-    ],
-)
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
     srcs = ["fake_controller_source.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/tools/cache/testing",
     importpath = "k8s.io/client-go/tools/cache/testing",
     deps = [
         "//vendor/k8s.io/api/core/v1:go_default_library",

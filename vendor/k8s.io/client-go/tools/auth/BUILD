@@ -9,6 +9,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["clientauth.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/tools/auth",
     importpath = "k8s.io/client-go/tools/auth",
     deps = ["//vendor/k8s.io/client-go/rest:go_default_library"],
 )

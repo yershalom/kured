@@ -13,6 +13,7 @@ go_library(
         "fake_storageclass.go",
         "fake_volumeattachment.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/storage/v1beta1/fake",
     importpath = "k8s.io/client-go/kubernetes/typed/storage/v1beta1/fake",
     deps = [
         "//vendor/k8s.io/api/storage/v1beta1:go_default_library",

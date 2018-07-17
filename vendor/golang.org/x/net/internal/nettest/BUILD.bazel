@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "error_posix.go",
+        "error_stub.go",
+        "interface.go",
+        "rlimit.go",
+        "rlimit_stub.go",
+        "rlimit_unix.go",
+        "rlimit_windows.go",
+        "stack.go",
+        "stack_stub.go",
+        "stack_unix.go",
+        "stack_windows.go",
+    ],
+    importmap = "github.com/weaveworks/kured/vendor/golang.org/x/net/internal/nettest",
+    importpath = "golang.org/x/net/internal/nettest",
+    visibility = ["//vendor/golang.org/x/net:__subpackages__"],
+)

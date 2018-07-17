@@ -8,6 +8,7 @@ go_library(
         "register.go",
         "zz_generated.conversion.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/scale/scheme/extensionsv1beta1",
     importpath = "k8s.io/client-go/scale/scheme/extensionsv1beta1",
     visibility = ["//visibility:public"],
     deps = [

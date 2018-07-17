@@ -15,6 +15,7 @@ go_library(
         "replicaset.go",
         "statefulset.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/informers/apps/v1beta2",
     importpath = "k8s.io/client-go/informers/apps/v1beta2",
     deps = [
         "//vendor/k8s.io/api/apps/v1beta2:go_default_library",

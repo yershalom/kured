@@ -6,6 +6,7 @@ go_library(
         "doc.go",
         "types.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/tools/bootstrap/token/api",
     importpath = "k8s.io/client-go/tools/bootstrap/token/api",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/api/core/v1:go_default_library"],

@@ -9,6 +9,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["discovery.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/discovery/fake",
     importpath = "k8s.io/client-go/discovery/fake",
     deps = [
         "//vendor/github.com/googleapis/gnostic/OpenAPIv2:go_default_library",

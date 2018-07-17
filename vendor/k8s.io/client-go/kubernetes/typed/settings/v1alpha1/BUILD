@@ -13,6 +13,7 @@ go_library(
         "podpreset.go",
         "settings_client.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/settings/v1alpha1",
     importpath = "k8s.io/client-go/kubernetes/typed/settings/v1alpha1",
     deps = [
         "//vendor/k8s.io/api/settings/v1alpha1:go_default_library",

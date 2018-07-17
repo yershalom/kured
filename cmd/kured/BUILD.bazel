@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "main.go",
+        "pflags.go",
+    ],
+    importpath = "github.com/weaveworks/kured/cmd/kured",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//pkg/alerts:go_default_library",
+        "//pkg/daemonsetlock:go_default_library",
+        "//pkg/delaytick:go_default_library",
+        "//pkg/notifications/slack:go_default_library",
+        "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/github.com/spf13/cobra:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "kured",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

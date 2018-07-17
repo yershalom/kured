@@ -1,24 +1,11 @@
 package(default_visibility = ["//visibility:public"])
 
-load(
-    "@io_bazel_rules_go//go:def.bzl",
-    "go_library",
-    "go_test",
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = ["memcache_test.go"],
-    embed = [":go_default_library"],
-    deps = [
-        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-        "//vendor/k8s.io/client-go/discovery/fake:go_default_library",
-    ],
-)
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
     srcs = ["memcache.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/discovery/cached",
     importpath = "k8s.io/client-go/discovery/cached",
     deps = [
         "//vendor/github.com/googleapis/gnostic/OpenAPIv2:go_default_library",

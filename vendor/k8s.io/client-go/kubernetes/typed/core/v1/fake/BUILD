@@ -33,6 +33,7 @@ go_library(
         "fake_serviceaccount.go",
         "fake_serviceaccount_expansion.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/core/v1/fake",
     importpath = "k8s.io/client-go/kubernetes/typed/core/v1/fake",
     deps = [
         "//vendor/k8s.io/api/authentication/v1:go_default_library",

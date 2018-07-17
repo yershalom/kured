@@ -1,30 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load(
-    "@io_bazel_rules_go//go:def.bzl",
-    "go_library",
-    "go_test",
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = [
-        "client_test.go",
-        "dynamic_util_test.go",
-    ],
-    embed = [":go_default_library"],
-    deps = [
-        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/runtime/serializer/streaming:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/types:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/watch:go_default_library",
-        "//vendor/k8s.io/client-go/rest:go_default_library",
-        "//vendor/k8s.io/client-go/rest/watch:go_default_library",
-    ],
-)
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
@@ -33,6 +9,7 @@ go_library(
         "client_pool.go",
         "dynamic_util.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/dynamic",
     importpath = "k8s.io/client-go/dynamic",
     deps = [
         "//vendor/k8s.io/api/core/v1:go_default_library",

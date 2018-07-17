@@ -1,20 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load(
-    "@io_bazel_rules_go//go:def.bzl",
-    "go_library",
-    "go_test",
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = [
-        "cache_test.go",
-        "round_trippers_test.go",
-        "transport_test.go",
-    ],
-    embed = [":go_default_library"],
-)
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
@@ -24,6 +10,7 @@ go_library(
         "round_trippers.go",
         "transport.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/transport",
     importpath = "k8s.io/client-go/transport",
     deps = [
         "//vendor/github.com/golang/glog:go_default_library",

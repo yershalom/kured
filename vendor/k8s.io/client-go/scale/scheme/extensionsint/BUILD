@@ -6,6 +6,7 @@ go_library(
         "doc.go",
         "register.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/scale/scheme/extensionsint",
     importpath = "k8s.io/client-go/scale/scheme/extensionsint",
     visibility = ["//visibility:public"],
     deps = [

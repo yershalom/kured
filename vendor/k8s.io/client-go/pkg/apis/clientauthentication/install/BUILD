@@ -8,6 +8,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["install.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/pkg/apis/clientauthentication/install",
     importpath = "k8s.io/client-go/pkg/apis/clientauthentication/install",
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/apimachinery/announced:go_default_library",

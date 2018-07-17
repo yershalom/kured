@@ -17,6 +17,7 @@ go_library(
         "fake_scale.go",
         "fake_statefulset.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/apps/v1beta2/fake",
     importpath = "k8s.io/client-go/kubernetes/typed/apps/v1beta2/fake",
     deps = [
         "//vendor/k8s.io/api/apps/v1beta2:go_default_library",

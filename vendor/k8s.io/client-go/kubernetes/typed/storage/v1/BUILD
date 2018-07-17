@@ -13,6 +13,7 @@ go_library(
         "storage_client.go",
         "storageclass.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/storage/v1",
     importpath = "k8s.io/client-go/kubernetes/typed/storage/v1",
     deps = [
         "//vendor/k8s.io/api/storage/v1:go_default_library",

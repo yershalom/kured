@@ -13,6 +13,7 @@ go_library(
         "generated_expansion.go",
         "job.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/batch/v1",
     importpath = "k8s.io/client-go/kubernetes/typed/batch/v1",
     deps = [
         "//vendor/k8s.io/api/batch/v1:go_default_library",

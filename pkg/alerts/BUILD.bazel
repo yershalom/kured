@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["prometheus.go"],
+    importpath = "github.com/weaveworks/kured/pkg/alerts",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/prometheus/client_golang/api/prometheus:go_default_library",
+        "//vendor/github.com/prometheus/common/model:go_default_library",
+    ],
+)

@@ -1,20 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load(
-    "@io_bazel_rules_go//go:def.bzl",
-    "go_library",
-    "go_test",
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = [
-        "helpers_test.go",
-        "types_test.go",
-    ],
-    embed = [":go_default_library"],
-    deps = ["//vendor/github.com/ghodss/yaml:go_default_library"],
-)
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
@@ -25,6 +11,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/tools/clientcmd/api",
     importpath = "k8s.io/client-go/tools/clientcmd/api",
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",

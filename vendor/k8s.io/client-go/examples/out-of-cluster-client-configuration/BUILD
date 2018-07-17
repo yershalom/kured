@@ -14,6 +14,7 @@ go_binary(
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/examples/out-of-cluster-client-configuration",
     importpath = "k8s.io/client-go/examples/out-of-cluster-client-configuration",
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",

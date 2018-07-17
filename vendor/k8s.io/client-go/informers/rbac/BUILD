@@ -8,6 +8,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["interface.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/informers/rbac",
     importpath = "k8s.io/client-go/informers/rbac",
     deps = [
         "//vendor/k8s.io/client-go/informers/internalinterfaces:go_default_library",

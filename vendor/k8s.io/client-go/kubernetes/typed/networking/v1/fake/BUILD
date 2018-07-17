@@ -12,6 +12,7 @@ go_library(
         "fake_networking_client.go",
         "fake_networkpolicy.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/networking/v1/fake",
     importpath = "k8s.io/client-go/kubernetes/typed/networking/v1/fake",
     deps = [
         "//vendor/k8s.io/api/networking/v1:go_default_library",

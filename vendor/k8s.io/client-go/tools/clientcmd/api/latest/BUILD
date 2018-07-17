@@ -8,6 +8,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["latest.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/tools/clientcmd/api/latest",
     importpath = "k8s.io/client-go/tools/clientcmd/api/latest",
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",

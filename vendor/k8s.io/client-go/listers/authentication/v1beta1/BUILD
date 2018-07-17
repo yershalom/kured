@@ -11,6 +11,7 @@ go_library(
         "expansion_generated.go",
         "tokenreview.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/listers/authentication/v1beta1",
     importpath = "k8s.io/client-go/listers/authentication/v1beta1",
     deps = [
         "//vendor/k8s.io/api/authentication/v1beta1:go_default_library",

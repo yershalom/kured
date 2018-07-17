@@ -14,6 +14,7 @@ go_binary(
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/examples/workqueue",
     importpath = "k8s.io/client-go/examples/workqueue",
     deps = [
         "//vendor/github.com/golang/glog:go_default_library",

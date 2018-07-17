@@ -8,6 +8,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["homedir.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/util/homedir",
     importpath = "k8s.io/client-go/util/homedir",
 )
 

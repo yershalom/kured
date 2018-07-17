@@ -8,6 +8,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["spdy.go"],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/transport/spdy",
     importpath = "k8s.io/client-go/transport/spdy",
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/util/httpstream:go_default_library",

@@ -13,6 +13,7 @@ go_library(
         "generated_expansion.go",
         "horizontalpodautoscaler.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/kubernetes/typed/autoscaling/v1",
     importpath = "k8s.io/client-go/kubernetes/typed/autoscaling/v1",
     deps = [
         "//vendor/k8s.io/api/autoscaling/v1:go_default_library",

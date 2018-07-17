@@ -11,6 +11,7 @@ go_library(
         "client.go",
         "client_pool.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/dynamic/fake",
     importpath = "k8s.io/client-go/dynamic/fake",
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",

@@ -14,6 +14,7 @@ go_library(
         "poddisruptionbudget_expansion.go",
         "podsecuritypolicy.go",
     ],
+    importmap = "github.com/weaveworks/kured/vendor/k8s.io/client-go/listers/policy/v1beta1",
     importpath = "k8s.io/client-go/listers/policy/v1beta1",
     deps = [
         "//vendor/github.com/golang/glog:go_default_library",
